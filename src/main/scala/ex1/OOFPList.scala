@@ -1,5 +1,7 @@
 package ex1
 
+import ex1.List.Nil
+
 // List as a pure interface
 enum List[A]:
   case ::(h: A, t: List[A])
@@ -45,13 +47,30 @@ enum List[A]:
     case h :: t => t.foldLeft(h)(op)
 
   // Exercise: implement the following methods
-  def zipWithValue[B](value: B): List[(A, B)] = ???
-  def length(): Int = ???
-  def zipWithIndex: List[(A, Int)] = ???
-  def partition(predicate: A => Boolean): (List[A], List[A]) = ???
-  def span(predicate: A => Boolean): (List[A], List[A]) = ???
-  def takeRight(n: Int): List[A] = ???
-  def collect(predicate: PartialFunction[A, A]): List[A] = ???
+  def zipWithValue[B](value: B): List[(A, B)] = map(a => (a, value))
+
+  def length(): Int = foldLeft(0)((acc, _) => acc + 1)
+
+  private def index[B](tail: List[B]): Int = length() - tail.length() - 1
+
+  def zipWithIndex: List[(A, Int)] = foldRight(Nil())((a, b) => (a, index(b)) :: b)
+
+  def partition(predicate: A => Boolean): (List[A], List[A]) =
+    foldRight((Nil(), Nil()))((a, acc) => acc match
+      case (left, right) => if predicate(a) then (a :: left, right) else (left, a :: right)
+    )
+
+  def span(predicate: A => Boolean): (List[A], List[A]) =
+    foldRight((Nil(), Nil()))((a, acc) => acc match
+      case (left, right) => if predicate(a) then (a :: left, right) else (Nil(), a :: left.append(right))
+    )
+
+  def takeRight(n: Int): List[A] =
+    this.zipWithIndex.flatMap((a, i) => if i >= length() - n then a :: Nil() else Nil())
+
+  def collect(predicate: PartialFunction[A, A]): List[A] =
+    foldRight(Nil())((a, acc) => if predicate.isDefinedAt(a) then predicate(a) :: acc else acc)
+
 // Factories
 object List:
 
@@ -68,6 +87,7 @@ object Test extends App:
   import List.*
   val reference = List(1, 2, 3, 4)
   println(reference.zipWithValue(10)) // List((1, 10), (2, 10), (3, 10), (4, 10))
+  println(reference.length()) // 4
   println(reference.zipWithIndex) // List((1, 0), (2, 1), (3, 2), (4, 3))
   println(reference.partition(_ % 2 == 0)) // (List(2, 4), List(1, 3))
   println(reference.span(_ % 2 != 0)) // (List(1), List(2, 3, 4))
