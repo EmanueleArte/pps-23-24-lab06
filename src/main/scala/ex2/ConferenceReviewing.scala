@@ -20,11 +20,6 @@ trait ConferenceReviewing:
 
   def sortedAcceptedArticles: Seq[(Int, Double)]
 
-  /**
-   * @return a map from articles to their average "weighted final score", namely,
-   *         the average value of CONFIDENCE*FINAL/10
-   *         Note: this method is optional in this exam
-   */
   def averageWeightedFinalScoreMap: Map[Int, Double]
 
 
